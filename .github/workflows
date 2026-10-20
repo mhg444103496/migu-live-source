@@ -1,0 +1,41 @@
+name: 自动刷新咪咕央视直播源
+
+on:
+  schedule:
+    # 每 30 分钟刷新一次(咪咕 token 约 4 小时有效)
+    - cron: '*/30 * * * *'
+  workflow_dispatch:        # 手动触发
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装 puppeteer-core
+        run: npm install 2>&1 | tail -3
+
+      - name: 运行抓取脚本
+        run: node refresh.js
+
+      - name: 提交更新后的直播源
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add live.txt
+          git commit -m "自动更新直播源" || echo "无变更无需提交"
+          git push
