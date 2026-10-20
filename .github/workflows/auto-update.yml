@@ -1,0 +1,33 @@
+name: 自动刷新咪咕央视直播源
+
+on:
+  schedule:
+    # 每30分钟跑一次
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 配置Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 安装依赖
+        run: npm install axios
+
+      - name: 运行抓取脚本
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_OWNER: "qqyywb"
+          GITEE_REPO: "250321"
+          GITEE_FILE: "live.txt"
+        run: node refresh.js
